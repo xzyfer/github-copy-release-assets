@@ -97,7 +97,7 @@ const doWork = (owner, repo, from, to, filter, verbose) => {
   Promise.using(makeTempDir(), (folder) => {
     return api.repos.getReleaseByTag({ owner: owner, repo: repo, tag: from })
       .then(release => {
-        return api.repos.listAssets({ owner: owner, repo: repo, id: release.id });
+        return api.repos.getAssets({ owner: owner, repo: repo, id: release.id });
       })
       .then(pager)
       .filter(filterFunc)
