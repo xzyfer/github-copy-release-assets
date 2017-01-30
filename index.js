@@ -64,9 +64,9 @@ const cleanupTempDir = (folder) => {
   .catch(console.error);
 }
 
-const doWork = (owner, repo, from, to, verbose) => {
-  if (!(owner && repo && from && to && verbose != null)) {
-    console.log(owner, repo, from, to, verbose);
+const doWork = (owner, repo, from, to, filter, verbose) => {
+  if (!(owner && repo && from && to)) {
+    console.log(owner, repo, from, to, filter, verbose);
     console.error('Not enough arguments');
     return;
   }
@@ -89,12 +89,18 @@ const doWork = (owner, repo, from, to, verbose) => {
     return assets;
   };
 
+  const filterFunc = (asset) => {
+    if (!filter) return true;
+    return asset.name.includes(filter);
+  };
+
   Promise.using(makeTempDir(), (folder) => {
     return api.repos.getReleaseByTag({ owner: owner, repo: repo, tag: from })
       .then(release => {
         return api.repos.listAssets({ owner: owner, repo: repo, id: release.id });
       })
       .then(pager)
+      .filter(filterFunc)
       .map((asset) => download(asset, folder))
       .each((file) => {
         return api.repos.getReleaseByTag({ owner: owner, repo: repo, tag: to })
@@ -120,15 +126,18 @@ const cli = meow(`
 
   Options
     -v, --verbose  Verbose output
+    -f, --filter   Filters assets to copy by a case-sensitive substring match
 
   Examples
     $ copy-release-assets sass node-sass v3.11.2 v3.11.3
 `, {
   alias: {
-    v: 'verbose'
+    f: 'filter',
+    v: 'verbose',
   },
   default: {
     verbose: false,
+    filter: null,
   }
 });
 
@@ -137,4 +146,4 @@ if (cli.flags.help) {
   return;
 }
 
-doWork(...cli.input, cli.flags.verbose);
+doWork(...cli.input, cli.flags.filter, cli.flags.verbose);
