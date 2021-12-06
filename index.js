@@ -76,7 +76,7 @@ const doWork = (owner, repo, from, to, filter, verbose) => {
   });
 
   api.authenticate({
-    type: 'oauth',
+    type: 'token',
     token: authToken,
   });
 
